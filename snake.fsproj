@@ -3,10 +3,18 @@
     <PropertyGroup>
         <OutputType>Exe</OutputType>
         <TargetFramework>net6.0</TargetFramework>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+      <WarningsAsErrors>3239;FS0025</WarningsAsErrors>
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="Program.fs"/>
+        <Compile Include="Basic.fs" />
+        <Compile Include="Engine.fs" />
+        <Compile Include="Board.fs" />
+        <Compile Include="Program.fs" />
     </ItemGroup>
 
 </Project>

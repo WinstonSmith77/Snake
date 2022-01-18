@@ -1,4 +1,6 @@
+module Program
 
+open System
 
-// For more information see https://aka.ms/fsharp-console-apps
-printfn "Hello from F#"
+Console.CursorVisible <- false
+Engine.Run Board.UpdateState Board.Output Board.Create 

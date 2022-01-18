@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "snake", "snake.fsproj", "{F340D60E-C793-450A-9727-2D53AFB2EBD0}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Snake", "snake.fsproj", "{F340D60E-C793-450A-9727-2D53AFB2EBD0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
