@@ -101,7 +101,8 @@ let private updateInGame inGame progress direction =
     let snakeBitesItSelf = List.contains newPosition inGame.Snake
 
     if snakeBitesItSelf then
-        { Mode = GameOver {FrameForReplay = 0 }; Progress = progress }
+        { Mode = GameOver { FrameForReplay = 0 }
+          Progress = progress }
     else
         let newSnake =
             newPosition :: inGame.Snake
@@ -140,10 +141,17 @@ let UpdateState states =
         | Some BossKeyPressed -> Engine.NewState.Exit
         | Some Space -> Engine.NewState.Result Create
         | Some _
-        | None -> let history = List.tail states
-                  let newGameOver = {FrameForReplay = gameOver.FrameForReplay + 1 }  
-                  let top =  { Mode = GameOver newGameOver ; Progress = progress } 
-                  Engine.NewState.Result (top::history)
+        | None ->
+            let history = List.tail states
+
+            let newGameOver =
+                { FrameForReplay = gameOver.FrameForReplay + 1 }
+
+            let top =
+                { Mode = GameOver newGameOver
+                  Progress = progress }
+
+            Engine.NewState.Result(top :: history)
     | InGame inGame ->
         let updateInGameBakedIn =
             (fun direction -> (updateInGame inGame progress direction) :: states)
@@ -154,7 +162,14 @@ let UpdateState states =
         | Some (NewDirection newDirection) -> updateInGameBakedIn newDirection
         | _ -> updateInGameBakedIn inGame.Direction
 
-let private output newFrameBuffer oldFrameBuffer =
+let private output newFrameBufferWithProblems oldFrameBuffer =
+    let newFrameBuffer =
+        newFrameBufferWithProblems
+        //no two pixels on one spot
+        |> List.groupBy (fun pixel -> pixel.Pos)
+        |> List.map (fun (_, pixels) -> List.last pixels)
+
+
     let newSet = Set.ofList newFrameBuffer
     let oldSet = Set.ofList oldFrameBuffer
 
@@ -170,43 +185,35 @@ let private output newFrameBuffer oldFrameBuffer =
 
     newFrameBuffer
 
-let private createText pos text =
+let private createChar pos text =
     Seq.mapi
         (fun i c ->
             { Pos = { X = pos.X + i; Y = pos.Y }
               Text = c })
         text
+    |> List.ofSeq
 
-let createInGame inGame progress =
+let private createInGame inGame progress =
     let createPixel pos = { Pos = pos; Text = '*' }
 
     let snake = List.map createPixel inGame.Snake
 
     let score =
-        (createText { X = 1; Y = 1 } (progress.Score.ToString("D6")))
-        |> List.ofSeq
+        (createChar { X = 1; Y = 1 } (progress.Score.ToString("D6")))
 
     let timeText = progress.TimeRunning.ToString(@"mm\:ss")
 
     let time =
-        (createText
+        (createChar
             { X = boardWidth - timeText.Length - 1
               Y = 1 }
             timeText)
-        |> List.ofSeq
-
 
     let length =
-        (createText { X = 1; Y = boardHeight - 1 } (progress.MaxLength.ToString("000")))
-        |> List.ofSeq
+        (createChar { X = 1; Y = boardHeight - 1 } (progress.MaxLength.ToString("000")))
 
     let frameBuffer =
-        [ snake; score; time; length ]
-        |> List.collect id
-
-        //no two pixels on one spot
-        |> List.groupBy (fun pixel -> pixel.Pos)
-        |> List.map (fun (_, pixels) -> List.last pixels)
+        [ snake; score; time; length ] |> List.collect id
 
     frameBuffer
 
@@ -214,13 +221,27 @@ let private outputInGame inGame progress oldFrameBuffer =
     let frameBuffer = createInGame inGame progress
     output frameBuffer oldFrameBuffer
 
-let private createInfoText (text: String) offsetY =
+let private bigR =
+    [ "XXXXXX   "
+      "X      X "
+      "X      X "
+      "XXXXXX   "
+      "X     X  "
+      "X      X "
+      "X      X " ]
+    |> List.map (fun line  -> line.Trim())
+
+let private createCenterText (text: String) offsetY =
     let x = (boardWidth - text.Length) / 2
+    (createChar { X = x; Y = boardHeight / 2 + offsetY } text)
 
-    (createText { X = x; Y = boardHeight / 2 + offsetY } text)
+let private putLogo pos logo =
+    List.mapi (fun y -> createChar { X = pos.X; Y = pos.Y + y }) logo
     |> List.ofSeq
+    |> List.collect id
 
-let private outputGameOver gameOver states progress oldFrameBuffer =
+
+let private outputGameOver gameOver states oldFrameBuffer =
     let text = "Game Over"
     let text2 = "Spacebar to continue"
 
@@ -230,23 +251,29 @@ let private outputGameOver gameOver states progress oldFrameBuffer =
 
     let texts =
         if showText then
-            [ createInfoText text 0
-              createInfoText text2 1 ]
+            [ putLogo { X = 3; Y = 3 } bigR
+              createCenterText text 0
+              createCenterText text2 1 ]
         else
-            []
+            [ putLogo { X = 3; Y = 3 } bigR ]
 
     let chooseInGames state =
         match state.Mode with
         | InGame inGame -> Some (inGame, state.Progress)
         | _ -> None
 
-    let allInGames =  List.choose chooseInGames states |> List.rev
+    let allInGames =
+        List.choose chooseInGames states |> List.rev
+
     let countInGames = List.length allInGames
-    let inGameToShow = List.item (gameOver.FrameForReplay % countInGames) allInGames
-    
+
+    let inGameToShow =
+        List.item (gameOver.FrameForReplay % countInGames) allInGames
+
     let newBuffer =
         [ createInGame (fst inGameToShow) (snd inGameToShow)
           List.collect id texts ]
+
         |> List.collect id
 
     output newBuffer oldFrameBuffer
@@ -257,4 +284,4 @@ let Output states oldFrameBuffer =
 
     match mode with
     | InGame inGame -> outputInGame inGame progress oldFrameBuffer
-    | GameOver gameOver -> outputGameOver gameOver states progress oldFrameBuffer
+    | GameOver gameOver -> outputGameOver gameOver states oldFrameBuffer
