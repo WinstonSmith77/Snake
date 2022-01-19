@@ -178,6 +178,7 @@ let private output newFrameBufferWithProblems oldFrameBuffer =
 
     let draw remove pixel =
         Console.SetCursorPosition(pixel.Pos.X, pixel.Pos.Y)
+        Console.ForegroundColor <- pixel.Color
         Console.Write(if remove then ' ' else pixel.Text)
 
     Set.iter (draw true) toRemove
@@ -189,14 +190,22 @@ let private createChar pos text =
     Seq.mapi
         (fun i c ->
             { Pos = { X = pos.X + i; Y = pos.Y }
-              Text = c })
+              Text = c
+              Color = ConsoleColor.White })
         text
     |> List.ofSeq
 
 let private createInGame inGame progress =
-    let createPixel pos = { Pos = pos; Text = '*' }
+    let createPixel i pos =
+        { Pos = pos
+          Text = '█'
+          Color =
+              if i % 2 = 0 then
+                  ConsoleColor.DarkYellow
+              else
+                  ConsoleColor.Cyan }
 
-    let snake = List.map createPixel inGame.Snake
+    let snake = List.mapi createPixel inGame.Snake
 
     let score =
         (createChar { X = 1; Y = 1 } (progress.Score.ToString("D6")))
@@ -229,7 +238,7 @@ let private bigR =
       "X     X  "
       "X      X "
       "X      X " ]
-    |> List.map (fun line  -> line.Trim())
+    |> List.map (fun line -> line.Trim())
 
 let private createCenterText (text: String) offsetY =
     let x = (boardWidth - text.Length) / 2
@@ -239,7 +248,6 @@ let private putLogo pos logo =
     List.mapi (fun y -> createChar { X = pos.X; Y = pos.Y + y }) logo
     |> List.ofSeq
     |> List.collect id
-
 
 let private outputGameOver gameOver states oldFrameBuffer =
     let text = "Game Over"
@@ -259,7 +267,7 @@ let private outputGameOver gameOver states oldFrameBuffer =
 
     let chooseInGames state =
         match state.Mode with
-        | InGame inGame -> Some (inGame, state.Progress)
+        | InGame inGame -> Some(inGame, state.Progress)
         | _ -> None
 
     let allInGames =
