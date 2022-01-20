@@ -3,4 +3,4 @@ module Program
 open System
 
 Console.CursorVisible <- false
-Engine.Run Game.UpdateState Game.Output Game.Create 
+Engine.Run GameLogic.UpdateState GameOutput.Output GameLogic.Create 

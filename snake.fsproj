@@ -13,7 +13,10 @@
     <ItemGroup>
         <Compile Include="Basic.fs" />
         <Compile Include="Engine.fs" />
-        <Compile Include="Game.fs" />
+        <Compile Include="Random.fs" />
+        <Compile Include="GameTypes.fs" />
+        <Compile Include="GameLogic.fs" />
+        <Compile Include="GameOutput.fs" />
         <Compile Include="Program.fs" />
     </ItemGroup>
 
