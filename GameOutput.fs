@@ -69,9 +69,16 @@ let private createInGameOutput inGame progress =
           Color = ConsoleColor.Green}
 
     let food = List.map createFood inGame.Food
+    
+    let createRock pos =
+        { Pos = pos
+          Text = '*'
+          Color = ConsoleColor.Yellow}
+
+    let rocks = List.map createRock inGame.Rocks
 
     let frameBuffer =
-        [ food; snake; score; time; length; ] |> List.collect id
+        [rocks; food; snake; score; time; length; ] |> List.collect id
 
     frameBuffer
 

@@ -7,6 +7,10 @@ let StartLength = 10
 let BoardWidth = Console.WindowWidth
 let BoardHeight = Console.WindowHeight
 let NumberOfFoods = 100
+let NumberOfRocks = 200
+
+let ScoreStep = 1
+let ScoreFood = 11 * ScoreStep
 
 [<RequireQualifiedAccess>]
 type Direction =
@@ -21,7 +25,8 @@ type InGame =
     { Current: Pos
       Direction: Direction
       Snake: Pos List
-      Food: Pos List }
+      Food: Pos List
+      Rocks: Pos List }
 
 type Mode =
     | InGame of InGame
@@ -34,4 +39,4 @@ type Progress =
       Ticks: uint64
       TimeRunning: TimeSpan }
 
-type Board = { Mode: Mode; Progress: Progress }
+type Game = { Mode: Mode; Progress: Progress }

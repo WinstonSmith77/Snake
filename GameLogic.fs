@@ -13,7 +13,8 @@ let Create =
                 { Current = { X = 3; Y = 3 }
                   Direction = Direction.Right
                   Snake = List.Empty
-                  Food = List.Empty }
+                  Food = List.Empty
+                  Rocks = List.Empty}
         Progress =
             { Score = 0
               MaxLength = StartLength
@@ -52,11 +53,13 @@ let private allCells =
               { X = x; Y = y } ]
     |> Set.ofList
 
-let private fillUpFood snake oldFood =
+let private fillUpCells  otherCells numberOfCells oldCells =
+    
+    let cellsOccupied = otherCells |> List.collect id |> Set.ofList
     let cellsAvailable =
-        (Set.difference allCells (Set.union (oldFood |> Set.ofList) (snake |> Set.ofList)))
+        Set.difference allCells cellsOccupied
 
-    Random.FillSeqWithRandom oldFood NumberOfFoods cellsAvailable
+    Random.FillSeqWithRandom oldCells numberOfCells cellsAvailable
     |> List.ofSeq
 
 let private updateInGame inGame progress direction =
@@ -78,42 +81,58 @@ let private updateInGame inGame progress direction =
 
     let snakeBitesItSelf = List.contains newPosition inGame.Snake
 
+    let createGameOver () =
+                        { Mode = GameOver { FrameForReplay = 0 }
+                          Progress = {progress with Ticks = progress.Ticks + 1UL} }
+                        
     if snakeBitesItSelf then
-        { Mode = GameOver { FrameForReplay = 0 }
-          Progress = progress }
+        createGameOver()
     else
-        let snakeHasEaten = List.contains newPosition inGame.Food
+        let snakeHasEatenFood = List.contains newPosition inGame.Food
+        let snakeHasEatenRock = List.contains newPosition inGame.Rocks
 
         let newMaxLength =
             progress.MaxLength
-            + if snakeHasEaten then 1 else 0
+            + if snakeHasEatenFood then 1 else 0
+            + if snakeHasEatenRock then -1 else 0
+            
+        if newMaxLength = 0 then
+            createGameOver ()
+        else
+            let newSnake =
+                newPosition :: inGame.Snake
+                |> List.truncate newMaxLength
 
-        let newSnake =
-            newPosition :: inGame.Snake
-            |> List.truncate newMaxLength
+            let newScore =
+                progress.Score + if snakeHasEatenFood then ScoreFood else ScoreStep
 
-        let newScore =
-            progress.Score + if snakeHasEaten then 10 else 1
+            let newFood =
+                (if snakeHasEatenFood then
+                     List.filter (fun pos -> pos <> newPosition) inGame.Food
+                 else
+                     inGame.Food)
+                |> fillUpCells [inGame.Snake; inGame.Rocks] NumberOfFoods
+            
+            let newRocks   =
+                (if snakeHasEatenRock then
+                     List.filter (fun pos -> pos <> newPosition) inGame.Rocks
+                 else
+                     inGame.Rocks)
+                |> fillUpCells [inGame.Snake; inGame.Food] NumberOfRocks
 
-        let newFood =
-            (if snakeHasEaten then
-                 List.filter (fun pos -> pos <> newPosition) inGame.Food
-             else
-                 inGame.Food)
-            |> fillUpFood inGame.Snake
-
-        { Mode =
-              InGame
-                  { Current = newPosition
-                    Snake = newSnake
-                    Direction = direction
-                    Food = newFood  }
-          Progress =
-              { progress with
-                    MaxLength = newMaxLength
-                    Score = newScore
-                    Ticks = progress.Ticks + 1UL
-                    TimeRunning = (progress.Start - DateTime.Now) } }
+            { Mode =
+                  InGame
+                      { Current = newPosition
+                        Snake = newSnake
+                        Direction = direction
+                        Food = newFood
+                        Rocks = newRocks }
+              Progress =
+                  { progress with
+                        MaxLength = newMaxLength
+                        Score = newScore
+                        Ticks = progress.Ticks + 1UL
+                        TimeRunning = (progress.Start - DateTime.Now) } }
 
 let UpdateState states =
     let state = List.head states
