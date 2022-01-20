@@ -6,6 +6,39 @@ open Microsoft.FSharp.Collections
 open Basic
 open Microsoft.FSharp.Core
 open GameTypes
+open GameOutput
+
+let private createWalls =
+    let border =
+        [ for x = 0 to BoardWidth - 1 do
+            yield { X = x; Y = 0 }
+            yield { X = x; Y = BoardHeight - 1 }
+          for y = 0 to BoardHeight - 1 do
+              yield { X = 0; Y = y }
+              yield { X = BoardWidth - 1; Y = y } ]
+        |> List.distinct
+
+    let centerX = BoardWidth / 2
+    let centerY = BoardHeight / 2
+
+    let windows =
+        [ for x = centerX - 5 to centerX + 5 do
+            yield { X = x; Y = 0 }
+            yield { X = x; Y = BoardHeight - 1 }
+          for y = centerY - 5 to centerY + 5 do
+              yield { X = 0; Y = y }
+              yield { X = BoardWidth - 1; Y = y } ]
+
+    [ border; windows ]
+    |> List.collect id
+    |> List.groupBy id
+    |> List.collect
+        (fun (pos, list) ->
+            if List.length list % 2 = 1 then
+                [ pos ]
+            else
+                [])
+
 
 let Create =
     [ { Mode =
@@ -14,7 +47,8 @@ let Create =
                   Direction = Direction.Right
                   Snake = List.Empty
                   Food = List.Empty
-                  Rocks = List.Empty}
+                  Rocks = List.Empty
+                  Walls = createWalls }
         Progress =
             { Score = 0
               MaxLength = StartLength
@@ -53,11 +87,12 @@ let private allCells =
               { X = x; Y = y } ]
     |> Set.ofList
 
-let private fillUpCells  otherCells numberOfCells oldCells =
-    
-    let cellsOccupied = otherCells |> List.collect id |> Set.ofList
-    let cellsAvailable =
-        Set.difference allCells cellsOccupied
+let private fillUpCells otherCells numberOfCells oldCells =
+
+    let cellsOccupied =
+        otherCells |> List.collect id |> Set.ofList
+
+    let cellsAvailable = Set.difference allCells cellsOccupied
 
     Random.FillSeqWithRandom oldCells numberOfCells cellsAvailable
     |> List.ofSeq
@@ -82,51 +117,76 @@ let private updateInGame inGame progress direction =
     let snakeBitesItSelf = List.contains newPosition inGame.Snake
 
     let createGameOver () =
-                        { Mode = GameOver { FrameForReplay = 0 }
-                          Progress = {progress with Ticks = progress.Ticks + 1UL} }
-                        
+        { Mode = GameOver { FrameForReplay = 0 }
+          Progress =
+              { progress with
+                    Ticks = progress.Ticks + 1UL } }
+
     if snakeBitesItSelf then
-        createGameOver()
+        createGameOver ()
     else
         let snakeHasEatenFood = List.contains newPosition inGame.Food
         let snakeHasEatenRock = List.contains newPosition inGame.Rocks
+        let snakeHasCrashedWall = List.contains newPosition inGame.Walls
+
+        let newNewPosition =
+            if snakeHasCrashedWall then
+                inGame.Current
+            else
+                newPosition
 
         let newMaxLength =
             progress.MaxLength
             + if snakeHasEatenFood then 1 else 0
             + if snakeHasEatenRock then -1 else 0
-            
+
         if newMaxLength = 0 then
             createGameOver ()
         else
             let newSnake =
-                newPosition :: inGame.Snake
-                |> List.truncate newMaxLength
+                if snakeHasCrashedWall then
+                    inGame.Snake
+                else
+                    newPosition :: inGame.Snake
+                    |> List.truncate newMaxLength
 
             let newScore =
-                progress.Score + if snakeHasEatenFood then ScoreFood else ScoreStep
+                progress.Score
+                + match (snakeHasCrashedWall, snakeHasEatenFood) with
+                  | true, _ -> 0
+                  | false, true -> ScoreFood
+                  | false, false -> ScoreStep
 
             let newFood =
                 (if snakeHasEatenFood then
                      List.filter (fun pos -> pos <> newPosition) inGame.Food
                  else
                      inGame.Food)
-                |> fillUpCells [inGame.Snake; inGame.Rocks] NumberOfFoods
-            
-            let newRocks   =
+                |> fillUpCells
+                    [ inGame.Snake
+                      inGame.Rocks
+                      inGame.Walls ]
+                    NumberOfFoods
+
+            let newRocks =
                 (if snakeHasEatenRock then
                      List.filter (fun pos -> pos <> newPosition) inGame.Rocks
                  else
                      inGame.Rocks)
-                |> fillUpCells [inGame.Snake; inGame.Food] NumberOfRocks
+                |> fillUpCells
+                    [ inGame.Snake
+                      inGame.Food
+                      inGame.Walls ]
+                    NumberOfRocks
 
             { Mode =
                   InGame
-                      { Current = newPosition
+                      { Current = newNewPosition
                         Snake = newSnake
                         Direction = direction
                         Food = newFood
-                        Rocks = newRocks }
+                        Rocks = newRocks
+                        Walls = inGame.Walls }
               Progress =
                   { progress with
                         MaxLength = newMaxLength
@@ -141,9 +201,9 @@ let UpdateState states =
     match mode with
     | GameOver gameOver ->
         match readActionFromInput () with
-        | Some BossKeyPressed ->None
+        | Some BossKeyPressed -> None
         | Some Space -> Some Create
-        | Some _ 
+        | Some _
         | None ->
             let history = List.tail states
 
@@ -154,7 +214,7 @@ let UpdateState states =
                 { Mode = GameOver newGameOver
                   Progress = progress }
 
-            Some (newState :: history)
+            Some(newState :: history)
     | InGame inGame ->
         let updateInGameBakedIn =
             (fun direction -> (updateInGame inGame progress direction) :: states)

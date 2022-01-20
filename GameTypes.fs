@@ -26,7 +26,8 @@ type InGame =
       Direction: Direction
       Snake: Pos List
       Food: Pos List
-      Rocks: Pos List }
+      Rocks: Pos List
+      Walls : Pos List}
 
 type Mode =
     | InGame of InGame

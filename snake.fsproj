@@ -15,8 +15,8 @@
         <Compile Include="Engine.fs" />
         <Compile Include="Random.fs" />
         <Compile Include="GameTypes.fs" />
-        <Compile Include="GameLogic.fs" />
         <Compile Include="GameOutput.fs" />
+        <Compile Include="GameLogic.fs" />
         <Compile Include="Program.fs" />
     </ItemGroup>
 

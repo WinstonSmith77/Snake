@@ -4,13 +4,14 @@ open System
 open Basic
 open GameTypes
 
+let private removeStackedPixels pixels =
+    pixels
+    |> List.groupBy (fun pixel -> pixel.Pos)
+    |> List.map (fun (_, pixels) -> List.last pixels)
+
 let private output newFrameBufferWithProblems oldFrameBuffer =
     let newFrameBuffer =
-        newFrameBufferWithProblems
-        //no two pixels on one spot
-        |> List.groupBy (fun pixel -> pixel.Pos)
-        |> List.map (fun (_, pixels) -> List.last pixels)
-
+        newFrameBufferWithProblems |> removeStackedPixels
 
     let newSet = Set.ofList newFrameBuffer
     let oldSet = Set.ofList oldFrameBuffer
@@ -28,7 +29,7 @@ let private output newFrameBufferWithProblems oldFrameBuffer =
 
     newFrameBuffer
 
-let private createChar pos text =
+let private createText pos text =
     Seq.mapi
         (fun i c ->
             { Pos = { X = pos.X + i; Y = pos.Y }
@@ -38,47 +39,55 @@ let private createChar pos text =
     |> List.ofSeq
 
 let private createInGameOutput inGame progress =
-    let createPixel i pos =
-        { Pos = pos
-          Text = '█'
-          Color =
-              if i % 2 = 0 then
-                  ConsoleColor.DarkYellow
-              else
-                  ConsoleColor.Cyan }
 
-    let snake = List.mapi createPixel inGame.Snake
+    let createItem c color pos = { Pos = pos; Text = c; Color = color }
+
+    let snake =
+        List.mapi
+            (fun i ->
+                createItem
+                    '█'
+                    (if i % 2 = 0 then
+                         ConsoleColor.DarkYellow
+                     else
+                         ConsoleColor.Cyan))
+
+            inGame.Snake
 
     let score =
-        (createChar { X = 1; Y = 1 } (progress.Score.ToString("D6")))
+        (createText { X = 2; Y = 2 } (progress.Score.ToString("D6")))
 
     let timeText = progress.TimeRunning.ToString(@"mm\:ss")
 
     let time =
-        (createChar
-            { X = BoardWidth - timeText.Length - 1
-              Y = 1 }
+        (createText
+            { X = BoardWidth - timeText.Length - 2
+              Y = 2 }
             timeText)
 
     let length =
-        (createChar { X = 1; Y = BoardHeight - 1 } (progress.MaxLength.ToString("000")))
+        (createText { X = 2; Y = BoardHeight - 2 } (progress.MaxLength.ToString("000")))
 
-    let createFood pos =
-        { Pos = pos
-          Text = 'o'
-          Color = ConsoleColor.Green}
 
-    let food = List.map createFood inGame.Food
-    
-    let createRock pos =
-        { Pos = pos
-          Text = '*'
-          Color = ConsoleColor.Yellow}
 
-    let rocks = List.map createRock inGame.Rocks
+    let food =
+        List.map (createItem 'o' ConsoleColor.Green) inGame.Food
+
+    let rocks =
+        List.map (createItem '*' ConsoleColor.Yellow) inGame.Rocks
+
+    let walls =
+        List.map (createItem '█' ConsoleColor.Gray) inGame.Walls
 
     let frameBuffer =
-        [rocks; food; snake; score; time; length; ] |> List.collect id
+        [ walls
+          rocks
+          food
+          snake
+          score
+          time
+          length ]
+        |> List.collect id
 
     frameBuffer
 
@@ -86,24 +95,9 @@ let private outputInGame inGame progress oldFrameBuffer =
     let frameBuffer = createInGameOutput inGame progress
     output frameBuffer oldFrameBuffer
 
-let private bigR =
-    [ "XXXXXX   "
-      "X      X "
-      "X      X "
-      "XXXXXX   "
-      "X     X  "
-      "X      X "
-      "X      X " ]
-    |> List.map (fun line -> line.Trim())
-
 let private createCenterText (text: String) offsetY =
     let x = (BoardWidth - text.Length) / 2
-    (createChar { X = x; Y = BoardHeight / 2 + offsetY } text)
-
-let private putLogo pos logo =
-    List.mapi (fun y -> createChar { X = pos.X; Y = pos.Y + y }) logo
-    |> List.ofSeq
-    |> List.collect id
+    (createText { X = x; Y = BoardHeight / 2 + offsetY } text)
 
 let private outputGameOver gameOver states oldFrameBuffer =
     let text = "Game Over"
@@ -115,15 +109,14 @@ let private outputGameOver gameOver states oldFrameBuffer =
 
     let texts =
         if showText then
-            [ putLogo { X = 3; Y = 3 } bigR
-              createCenterText text 0
+            [ createCenterText text 0
               createCenterText text2 1 ]
         else
-            [ putLogo { X = 3; Y = 3 } bigR ]
+            []
 
     let chooseInGames state =
         match state.Mode with
-        |  InGame inGame -> Some(inGame, state.Progress)
+        | InGame inGame -> Some(inGame, state.Progress)
         | _ -> None
 
     let allInGames =
