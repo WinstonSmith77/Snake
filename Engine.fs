@@ -5,39 +5,21 @@ open System
 open System.Threading
 open Microsoft.FSharp.Core
 
-let frameTime = 100
+let private frameTime = 100
 
-type NewState<'a> =
-    | Result of 'a
-    | Exit
+let rec Run updateState output state frameBuffer =
+    let start = DateTime.Now
 
-let Run updateState output startState =
-    let callUpdateAndWait state frameBuffer =
-        let start = DateTime.Now
+    match updateState state with
+    | Some newState ->
+        let toWait =
+            frameTime
+            - ((DateTime.Now - start).TotalMilliseconds
+               |> Math.Ceiling
+               |> int)
 
-        match updateState state with
+        if toWait > 0 then Thread.Sleep toWait
 
-        | Exit -> Exit
-        | Result newState ->
-            let toWait =
-                frameTime
-                - ((DateTime.Now - start).TotalMilliseconds
-                   |> Math.Ceiling
-                   |> int)
-
-            if toWait > 0 then Thread.Sleep toWait
-
-            let frameBuffer = output newState frameBuffer
-
-            (newState, frameBuffer) |> Result
-
-    let mutable newState = startState
-    let mutable newFrameBuffer = List.Empty
-    let mutable doBreak = false
-
-    while doBreak |> not do
-        match callUpdateAndWait newState newFrameBuffer with
-        | Exit -> doBreak <- true
-        | Result (state, frameBuffer) ->
-            newState <- state
-            newFrameBuffer <- frameBuffer
+        let frameBuffer = output newState frameBuffer
+        Run updateState output newState frameBuffer
+      | None -> None   

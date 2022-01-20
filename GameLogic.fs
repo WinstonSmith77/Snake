@@ -141,26 +141,26 @@ let UpdateState states =
     match mode with
     | GameOver gameOver ->
         match readActionFromInput () with
-        | Some BossKeyPressed -> Engine.NewState.Exit
-        | Some Space -> Engine.NewState.Result Create
-        | Some _
+        | Some BossKeyPressed ->None
+        | Some Space -> Some Create
+        | Some _ 
         | None ->
             let history = List.tail states
 
             let newGameOver =
                 { FrameForReplay = gameOver.FrameForReplay + 1 }
 
-            let top =
+            let newState =
                 { Mode = GameOver newGameOver
                   Progress = progress }
 
-            Engine.NewState.Result(top :: history)
+            Some (newState :: history)
     | InGame inGame ->
         let updateInGameBakedIn =
             (fun direction -> (updateInGame inGame progress direction) :: states)
-            >> Engine.NewState.Result
+            >> Some
 
         match readActionFromInput () with
-        | Some BossKeyPressed -> Engine.NewState.Exit
+        | Some BossKeyPressed -> None
         | Some (NewDirection newDirection) -> updateInGameBakedIn newDirection
         | _ -> updateInGameBakedIn inGame.Direction
