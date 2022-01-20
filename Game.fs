@@ -1,5 +1,5 @@
 ﻿[<RequireQualifiedAccess>]
-module Board
+module Game
 
 open System
 open Microsoft.FSharp.Collections
@@ -17,7 +17,6 @@ type Direction =
     | Right
     | Up
     | Down
-
 
 type GameOver = { FrameForReplay: int }
 
