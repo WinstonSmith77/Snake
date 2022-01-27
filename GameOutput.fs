@@ -68,8 +68,6 @@ let private createInGameOutput inGame progress =
     let length =
         (createText { X = 2; Y = BoardHeight - 2 } (progress.MaxLength.ToString("000")))
 
-
-
     let food =
         List.map (createItem 'o' ConsoleColor.Green) inGame.Food
 

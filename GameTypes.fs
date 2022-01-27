@@ -6,8 +6,8 @@ open Basic
 let StartLength = 10
 let BoardWidth = Console.WindowWidth
 let BoardHeight = Console.WindowHeight
-let NumberOfFoods = 100
-let NumberOfRocks = 200
+let NumberOfFoods = 200
+let NumberOfRocks = 20
 
 let ScoreStep = 1
 let ScoreFood = 11 * ScoreStep
@@ -29,7 +29,7 @@ type InGame =
       Rocks: Pos List
       Walls : Pos List}
 
-type Mode =
+type GameMode =
     | InGame of InGame
     | GameOver of GameOver
 
@@ -40,4 +40,4 @@ type Progress =
       Ticks: uint64
       TimeRunning: TimeSpan }
 
-type Game = { Mode: Mode; Progress: Progress }
+type Game = { Mode: GameMode; Progress: Progress }
