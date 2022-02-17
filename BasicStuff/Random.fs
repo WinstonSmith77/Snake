@@ -1,7 +1,6 @@
 ﻿[<RequireQualifiedAccess>]
 module Random
 
-open Basic
 open System
 
 let random = Random()

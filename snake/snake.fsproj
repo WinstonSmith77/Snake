@@ -1,9 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <OutputType>Exe</OutputType>
         <TargetFramework>net6.0</TargetFramework>
         <IsPackable>false</IsPackable>
+        <AssemblyName>Snake</AssemblyName>
+        <RootNamespace>Snake</RootNamespace>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
@@ -12,12 +13,13 @@
 
     <ItemGroup>
         <Compile Include="Basic.fs" />
-        <Compile Include="Engine.fs" />
-        <Compile Include="Random.fs" />
         <Compile Include="GameTypes.fs" />
         <Compile Include="GameOutput.fs" />
         <Compile Include="GameLogic.fs" />
-        <Compile Include="Program.fs" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\BasicStuff\BasicStuff.fsproj" />
     </ItemGroup>
 
 </Project>
