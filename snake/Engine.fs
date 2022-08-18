@@ -4,8 +4,7 @@ module Engine
 open System
 open System.Threading
 open Microsoft.FSharp.Core
-
-let private frameTime = 100
+open GameTypes
 
 let rec Run updateState output state frameBuffer =
     let start = DateTime.Now
@@ -13,7 +12,7 @@ let rec Run updateState output state frameBuffer =
     match updateState state with
     | Some newState ->
         let toWait =
-            frameTime
+            FrameTime
             - ((DateTime.Now - start).TotalMilliseconds
                |> Math.Ceiling
                |> int)

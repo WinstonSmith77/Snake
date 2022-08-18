@@ -9,6 +9,8 @@ let BoardHeight = Console.WindowHeight
 let NumberOfFoods = 200
 let NumberOfRocks = 20
 
+let FrameTime = 100
+
 let ScoreStep = 1
 let ScoreFood = 11 * ScoreStep
 
