@@ -8,7 +8,7 @@ let private removeStackedPixels pixels =
     |> List.groupBy (fun pixel -> pixel.Pos)
     |> List.map (fun (_, pixels) -> List.last pixels)
 
-let private output draw newFrameBufferWithProblems oldFrameBuffer =
+let private output (draw: IDraw) newFrameBufferWithProblems oldFrameBuffer =
     let newFrameBuffer =
         newFrameBufferWithProblems |> removeStackedPixels
 
@@ -19,8 +19,8 @@ let private output draw newFrameBufferWithProblems oldFrameBuffer =
     let toRemove = Set.difference oldSet newSet
 
 
-    Set.iter (draw true) toRemove
-    Set.iter (draw false) toDraw
+    Set.iter (draw.DrawPixel true) toRemove
+    Set.iter (draw.DrawPixel false) toDraw
 
     newFrameBuffer
 

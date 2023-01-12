@@ -57,3 +57,5 @@ type ActionFromInput =
     | BossKeyPressed
     | Space
 
+type IDraw =
+    abstract member DrawPixel : remove:bool -> pixel:Pixel -> unit

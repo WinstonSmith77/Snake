@@ -12,6 +12,7 @@
         <Compile Include="GameOutput.fs" />
         <Compile Include="GameLogic.fs" />
         <Compile Include="Engine.fs" />
+        <Compile Include="ImplementOut.fs" />
         <Compile Include="Program.fs" />
     </ItemGroup>
 

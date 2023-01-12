@@ -2,6 +2,7 @@ module Program
 
 open System
 open GameTypes
+open ImplementOut
 
 let private readActionFromInput () =
     let keyPressed =
@@ -29,4 +30,4 @@ let draw remove pixel =
         Console.Write(if remove then ' ' else pixel.Text)        
 
 Console.CursorVisible <- false
-Engine.Run (GameLogic.UpdateState readActionFromInput) (GameOutput.Output draw) GameLogic.Create List.Empty |> ignore
+Engine.Run (GameLogic.UpdateState readActionFromInput) (GameOutput.Output (ConsoleOut())) GameLogic.Create List.Empty |> ignore
