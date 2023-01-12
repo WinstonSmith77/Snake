@@ -8,7 +8,6 @@
 
     <ItemGroup>
         <Compile Include="Random.fs" />
-        <Compile Include="Basic.fs" />
         <Compile Include="GameTypes.fs" />
         <Compile Include="GameOutput.fs" />
         <Compile Include="GameLogic.fs" />

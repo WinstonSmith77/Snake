@@ -3,10 +3,9 @@ module GameLogic
 
 open System
 open Microsoft.FSharp.Collections
-open Basic
 open Microsoft.FSharp.Core
 open GameTypes
-open GameOutput
+
 
 let private createWalls =
     let border =
@@ -56,30 +55,7 @@ let Create =
               TimeRunning = TimeSpan.Zero
               Ticks = 0UL } } ]
 
-type ActionFromInput =
-    | NewDirection of Direction
-    | BossKeyPressed
-    | Space
 
-let private readActionFromInput () =
-    let keyPressed =
-        match Console.KeyAvailable with
-        | false -> None
-        | true -> Console.ReadKey(true).Key |> Some
-
-    let someNewDirection = NewDirection >> Some
-
-    match keyPressed with
-    | None -> None
-    | Some ConsoleKey.Escape -> Some BossKeyPressed
-    | Some key ->
-        match key with
-        | ConsoleKey.LeftArrow -> Direction.Left |> someNewDirection
-        | ConsoleKey.RightArrow -> Direction.Right |> someNewDirection
-        | ConsoleKey.UpArrow -> Direction.Up |> someNewDirection
-        | ConsoleKey.DownArrow -> Direction.Down |> someNewDirection
-        | ConsoleKey.Spacebar -> Some Space
-        | _ -> None
 
 let private allCells =
     [ for x = 0 to BoardWidth - 1 do
@@ -194,7 +170,7 @@ let private updateInGame inGame progress direction =
                         Ticks = progress.Ticks + 1UL
                         TimeRunning = (progress.Start - DateTime.Now) } }
 
-let UpdateState states =
+let UpdateState readActionFromInput states =
     let state = List.head states
     let { Mode = mode; Progress = progress } = state
 

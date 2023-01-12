@@ -1,7 +1,6 @@
 ﻿module GameOutput
 
 open System
-open Basic
 open GameTypes
 
 let private removeStackedPixels pixels =
@@ -9,7 +8,7 @@ let private removeStackedPixels pixels =
     |> List.groupBy (fun pixel -> pixel.Pos)
     |> List.map (fun (_, pixels) -> List.last pixels)
 
-let private output newFrameBufferWithProblems oldFrameBuffer =
+let private output draw newFrameBufferWithProblems oldFrameBuffer =
     let newFrameBuffer =
         newFrameBufferWithProblems |> removeStackedPixels
 
@@ -19,10 +18,6 @@ let private output newFrameBufferWithProblems oldFrameBuffer =
     let toDraw = Set.difference newSet oldSet
     let toRemove = Set.difference oldSet newSet
 
-    let draw remove pixel =
-        Console.SetCursorPosition(pixel.Pos.X, pixel.Pos.Y)
-        Console.ForegroundColor <- pixel.Color
-        Console.Write(if remove then ' ' else pixel.Text)
 
     Set.iter (draw true) toRemove
     Set.iter (draw false) toDraw
@@ -89,15 +84,15 @@ let private createInGameOutput inGame progress =
 
     frameBuffer
 
-let private outputInGame inGame progress oldFrameBuffer =
+let private outputInGame draw inGame progress oldFrameBuffer =
     let frameBuffer = createInGameOutput inGame progress
-    output frameBuffer oldFrameBuffer
+    output draw frameBuffer oldFrameBuffer
 
 let private createCenterText (text: String) offsetY =
     let x = (BoardWidth - text.Length) / 2
     (createText { X = x; Y = BoardHeight / 2 + offsetY } text)
 
-let private outputGameOver gameOver states oldFrameBuffer =
+let private outputGameOver draw gameOver states oldFrameBuffer =
     let text = "Game Over"
     let text2 = "Spacebar to continue"
 
@@ -131,12 +126,12 @@ let private outputGameOver gameOver states oldFrameBuffer =
 
         |> List.collect id
 
-    output newBuffer oldFrameBuffer
+    output draw newBuffer oldFrameBuffer
 
-let Output states oldFrameBuffer =
+let Output draw states oldFrameBuffer =
     let state = List.head states
     let { Mode = mode; Progress = progress } = state
 
     match mode with
-    | InGame inGame -> outputInGame inGame progress oldFrameBuffer
-    | GameOver gameOver -> outputGameOver gameOver states oldFrameBuffer
+    | InGame inGame -> outputInGame draw inGame progress oldFrameBuffer
+    | GameOver gameOver -> outputGameOver draw gameOver states oldFrameBuffer

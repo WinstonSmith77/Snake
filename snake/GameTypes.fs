@@ -1,7 +1,7 @@
 ﻿module GameTypes
 
 open System
-open Basic
+
 
 let StartLength = 10
 let BoardWidth = Console.WindowWidth
@@ -13,6 +13,14 @@ let FrameTime = 100
 
 let ScoreStep = 1
 let ScoreFood = 11 * ScoreStep
+
+type Pos = { X: int; Y: int }
+
+type Pixel =
+    { Pos: Pos
+      Text: char
+      Color: ConsoleColor }
+
 
 [<RequireQualifiedAccess>]
 type Direction =
@@ -43,3 +51,9 @@ type Progress =
       TimeRunning: TimeSpan }
 
 type Game = { Mode: GameMode; Progress: Progress }
+
+type ActionFromInput =
+    | NewDirection of Direction
+    | BossKeyPressed
+    | Space
+
